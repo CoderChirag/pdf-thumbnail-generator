@@ -22,14 +22,6 @@ func New(err error, msg string, code string) *ThumbnailServiceError {
 }
 
 func NewFromEnum(err error, enum ErrorMessageEnum) *ThumbnailServiceError {
-	myMap := map[string]string{
-		"first key":  "first value",
-		"second key": "second value",
-		"third key":  "third value",
-		"fourth key": "fourth value",
-		"fifth key":  "fifth value",
-	}
-	fmt.Println(myMap)
 	return &ThumbnailServiceError{
 		name: "ThumbnailServiceError",
 		msg:  errorMessagesEnum[enum].Message,

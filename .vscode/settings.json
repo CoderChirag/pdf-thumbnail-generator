@@ -7,13 +7,7 @@
       "source.organizeImports": "always"
     }
   },
-  "gopls": {
-    "ui.semanticTokens": true
-  },
   "go.diagnostic.vulncheck": "Imports",
-  "go.inlayHints.compositeLiteralFields": true,
-  "go.inlayHints.constantValues": true,
-  "go.inlayHints.parameterNames": true,
   "go.testEnvFile": "${workspaceFolder}/.env.test",
   "go.useLanguageServer": true,
   "go.lintTool": "golangci-lint",

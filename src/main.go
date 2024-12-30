@@ -13,6 +13,14 @@ func main() {
 	svc, err := thumbnail.NewThumbnailService(
 		"https://drive.usercontent.google.com/download?id=1Qspoh1gKWl4KS9MPj0LCQE3hKdKZInmb&export=download&authuser=0",
 	)
+	handleError(err)
+
+	s, err := svc.GenerateThumbnail(context.Background())
+	handleError(err)
+	fmt.Println(s)
+}
+
+func handleError(err error) {
 	if err != nil {
 		var typeErr types.Error
 		var code string
@@ -22,6 +30,4 @@ func main() {
 		}
 		panic(err)
 	}
-	s, _ := svc.GenerateThumbnail(context.Background())
-	fmt.Println(s)
 }

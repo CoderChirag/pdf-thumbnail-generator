@@ -3,17 +3,11 @@ package thumbnail
 
 import (
 	"context"
-	stderrors "errors"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
-	"os"
-	"path"
 
-	"github.com/google/uuid"
-
-	thumbnailErrors "github.com/coderchirag/pdf-thumbnail-generator/thumbnail/errors"
+	"github.com/coderchirag/pdf-thumbnail-generator/types"
 )
 
 type ThumbnailService struct {
@@ -33,81 +27,75 @@ func (s *ThumbnailService) GenerateThumbnail(ctx context.Context) (string, error
 }
 
 func (s *ThumbnailService) downloadFile(ctx context.Context) (string, error) {
-	_, pipeWriter := io.Pipe()
-
-	go func() {
-		defer func() {
-			if err := pipeWriter.Close(); err != nil {
-				// Handle or log the error as needed
-				_ = pipeWriter.CloseWithError(err)
-			}
-		}()
-
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, s.url, nil)
-		if err != nil {
-			pipeWriter.CloseWithError(err)
-			return
-		}
-
-		res, err := http.DefaultClient.Do(req)
-		if err != nil {
-			pipeWriter.CloseWithError(err)
-			return
-		}
-
-		defer func() {
-			if cerr := res.Body.Close(); cerr != nil && err == nil {
-				pipeWriter.CloseWithError(cerr)
-			}
-		}()
-
-		_, err = io.Copy(pipeWriter, res.Body)
-		if err != nil {
-			pipeWriter.CloseWithError(err)
+	pipeReader, pipeWriter := io.Pipe()
+	defer func() {
+		if err := pipeReader.Close(); err != nil {
+			_ = pipeReader.CloseWithError(err)
 		}
 	}()
+
+	go s.downloadFileFromUrl(ctx, pipeWriter)
 
 	parsedURL, err := url.Parse(s.url)
 	if err != nil {
 		return "", handleError(err)
 	}
-	var filePath string
-	if path.Ext(parsedURL.Path) == ".pdf" {
-		filePath = path.Join(os.TempDir(), "pdf-parsing", path.Base(parsedURL.Path))
-	} else {
-		filePath = path.Join(os.TempDir(), "pdf-parsing", uuid.NewString()+".pdf")
+
+	filePath, dir := getFileAndDirPath(parsedURL)
+	err = createDirIfNotExists(dir)
+	if err != nil {
+		return "", err
+	}
+
+	file, err := createFile(filePath)
+	if err != nil {
+		if file != nil {
+			_ = removeFile(filePath)
+		}
+		return "", err
+	}
+
+	_, err = io.Copy(file, pipeReader)
+	if err != nil {
+		_ = removeFile(filePath)
+		return "", handleError(err)
 	}
 
 	return filePath, nil
 }
 
-func validateThumbnailURL(fileURL string) error {
-	if fileURL == "" {
-		err := thumbnailErrors.New(
-			stderrors.New("Url should not be empty."),
-			fmt.Sprint(thumbnailErrors.ValidationError),
-			thumbnailErrors.ValidationError.Code(),
-		)
-		return err
-	}
+func (s *ThumbnailService) downloadFileFromUrl(
+	ctx context.Context,
+	writer types.WriteCloserWithError,
+) {
+	defer func() {
+		if err := writer.Close(); err != nil {
+			// Handle or log the error as needed
+			_ = writer.CloseWithError(err)
+		}
+	}()
 
-	_, err := url.Parse(fileURL)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, s.url, nil)
 	if err != nil {
-		err := thumbnailErrors.New(
-			stderrors.New("Invalid url."),
-			fmt.Sprint(thumbnailErrors.ValidationError),
-			thumbnailErrors.ValidationError.Code(),
-		)
-		return err
+		_ = writer.CloseWithError(err)
+		return
 	}
 
-	return nil
-}
+	res, err := http.DefaultClient.Do(req)
+	defer func() {
+		if res != nil && res.Body != nil {
+			if cerr := res.Body.Close(); cerr != nil {
+				_ = writer.CloseWithError(cerr)
+			}
+		}
+	}()
+	if err != nil {
+		_ = writer.CloseWithError(err)
+		return
+	}
 
-func handleError(e error) error {
-	return thumbnailErrors.New(
-		e,
-		fmt.Sprint(thumbnailErrors.UnknownError),
-		thumbnailErrors.UnknownError.Code(),
-	)
+	_, err = io.Copy(writer, res.Body)
+	if err != nil {
+		_ = writer.CloseWithError(err)
+	}
 }
