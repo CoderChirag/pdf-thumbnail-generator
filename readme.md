@@ -14,4 +14,4 @@
 
 ### Starting Project
 
-- `go run .`
+- `cd src && go run .`
