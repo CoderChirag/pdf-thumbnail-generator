@@ -1,0 +1,72 @@
+# Configure golangci-lint
+# See https://golangci-lint.run/usage/configuration/ for reference
+run:
+  timeout: 5m
+  tests: true
+
+output:
+  sort-results: true
+  print-issued-lines: true
+
+linters:
+  enable:
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - typecheck
+    - unused
+    - gofmt
+    - goimports
+    - gosec
+    - misspell
+    - revive
+    - bodyclose
+    - dupl
+    - gocritic
+    - prealloc
+    - errorlint
+    - gofumpt
+    - gomodguard
+    - importas
+    - perfsprint
+    - testifylint
+    - thelper
+    - unparam
+    - usestdlibvars
+    - whitespace
+
+linters-settings:
+  govet:
+    enable-all: true
+  goimports:
+    local-prefixes: github.com/coderchirag/pdf-thumbnail-generator
+  revive:
+    rules:
+      - name: exported
+        disabled: true
+  importas:
+    no-unaliased: true
+    alias:
+      - alias: stderrors
+        pkg: errors
+  perfsprint:
+    # Optimizes even if it requires an int or uint type cast.
+    int-conversion: true
+    # Optimizes into `err.Error()` even if it is only equivalent for non-nil errors.
+    err-error: true
+    # Optimizes `fmt.Errorf`.
+    errorf: true
+    # Optimizes `fmt.Sprintf` with only one argument.
+    sprintf1: true
+    # Optimizes into strings concatenation.
+    strconcat: true
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  exclude-rules:
+    - path: '(.+)_test\.go'
+      linters:
+        - unparam
