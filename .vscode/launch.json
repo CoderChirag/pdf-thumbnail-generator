@@ -7,7 +7,8 @@
       "request": "launch",
       "mode": "auto",
       "program": "${workspaceFolder}/src/main.go",
-      "envFile": "${workspaceFolder}/.env.local"
+      "envFile": "${workspaceFolder}/.env.local",
+      "console": "integratedTerminal"
     }
   ]
 }

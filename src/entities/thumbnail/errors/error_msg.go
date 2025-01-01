@@ -1,4 +1,4 @@
-package errors
+package thumbnail_errors
 
 import "fmt"
 
@@ -12,13 +12,33 @@ type ErrorMessageMap struct {
 }
 
 const (
-	ValidationError ErrorMessageEnum = iota
+	PDFParseError ErrorMessageEnum = iota
+	CreateImageFileError
+	ImageCreationError
+	EncodeImageError
+	ContextError
 	UnknownError
 )
 
 var errorMessagesEnum = map[ErrorMessageEnum]ErrorMessageMap{
-	ValidationError: {
-		Message: "validation error",
+	PDFParseError: {
+		Message: "Error parsing PDF",
+		Code:    "400",
+	},
+	CreateImageFileError: {
+		Message: "Error creating image file",
+		Code:    "400",
+	},
+	ImageCreationError: {
+		Message: "Error creating image from PDF",
+		Code:    "500",
+	},
+	EncodeImageError: {
+		Message: "Error encoding image",
+		Code:    "500",
+	},
+	ContextError: {
+		Message: "Context error",
 		Code:    "400",
 	},
 	UnknownError: {

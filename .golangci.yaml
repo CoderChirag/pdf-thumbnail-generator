@@ -48,9 +48,9 @@ linters-settings:
         disabled: true
   importas:
     no-unaliased: true
-    alias:
-      - alias: stderrors
-        pkg: errors
+    # alias:
+    #   - alias: stderrors
+    #     pkg: errors
   perfsprint:
     # Optimizes even if it requires an int or uint type cast.
     int-conversion: true
