@@ -2,6 +2,7 @@ package file_storage
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"net/http"
 
@@ -31,6 +32,14 @@ func downloadFileFromUrl(
 		return file_storage_errors.CloseIoWithErrorAndCode(
 			writer,
 			err,
+			file_storage_errors.HttpError,
+		)
+	}
+
+	if res.StatusCode != http.StatusOK {
+		return file_storage_errors.CloseIoWithErrorAndCode(
+			writer,
+			fmt.Errorf("unexpected status code: %d", res.StatusCode),
 			file_storage_errors.HttpError,
 		)
 	}

@@ -21,6 +21,7 @@ func GenerateThumbnailFromPdf(ctx context.Context, pdfPath string, quality int) 
 	if err != nil {
 		return "", err
 	}
+	defer thumbnailFile.Close()
 	go generateThumbnailFromPdfConcurrently(thumbnailFile, pdfPath, quality, doneChan, errChan)
 
 	select {
@@ -35,7 +36,7 @@ func GenerateThumbnailFromPdf(ctx context.Context, pdfPath string, quality int) 
 	}
 }
 
-func createThumbnailFile(pdfPath string) (io.Writer, string, error) {
+func createThumbnailFile(pdfPath string) (io.WriteCloser, string, error) {
 	thumbnailPath := path.Join(
 		path.Dir(pdfPath),
 		strings.ReplaceAll(path.Base(pdfPath), path.Ext(pdfPath), ".jpeg"),
@@ -57,12 +58,15 @@ func createThumbnailFile(pdfPath string) (io.Writer, string, error) {
 }
 
 func generateThumbnailFromPdfConcurrently(
-	file io.Writer,
+	file io.WriteCloser,
 	pdfPath string,
 	quality int,
-	doneChan chan bool,
-	errChan chan error,
+	doneChan chan<- bool,
+	errChan chan<- error,
 ) {
+	defer close(doneChan)
+	defer close(errChan)
+	defer file.Close()
 	img, err := generateThumbnailImageFromPdf(pdfPath)
 	if err != nil {
 		errChan <- err

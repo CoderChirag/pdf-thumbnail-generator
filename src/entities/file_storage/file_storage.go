@@ -34,7 +34,7 @@ func DownloadFileToTempDir(
 	if err != nil {
 		return "", err
 	}
-
+	defer file.Close()
 	_, err = io.Copy(file, pipeReader)
 	if err != nil {
 		_ = fsutil.RemoveFile(filePath)
