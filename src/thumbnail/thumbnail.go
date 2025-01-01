@@ -3,11 +3,17 @@ package thumbnail
 
 import (
 	"context"
+	"fmt"
+	"image/jpeg"
 	"io"
 	"net/http"
 	"net/url"
+	"os"
+	"path"
+	"strings"
 
 	"github.com/coderchirag/pdf-thumbnail-generator/types"
+	"github.com/gen2brain/go-fitz"
 )
 
 type ThumbnailService struct {
@@ -22,8 +28,23 @@ func NewThumbnailService(url string) (*ThumbnailService, error) {
 	return &ThumbnailService{url: url}, nil
 }
 
-func (s *ThumbnailService) GenerateThumbnail(ctx context.Context) (string, error) {
-	return s.downloadFile(ctx)
+func (s *ThumbnailService) GenerateThumbnail(ctx context.Context, quality int) (string, error) {
+	filePath, err := s.downloadFile(ctx)
+	fmt.Println("filePath", filePath)
+	if err != nil {
+		return "", err
+	}
+	defer func() {
+		if filePath != "" {
+			_ = os.Remove(filePath)
+		}
+	}()
+	thumbnailPath, err := generateThumbnail(ctx, filePath, quality)
+	if err != nil {
+		return "", err
+	}
+
+	return thumbnailPath, nil
 }
 
 func (s *ThumbnailService) downloadFile(ctx context.Context) (string, error) {
@@ -49,9 +70,6 @@ func (s *ThumbnailService) downloadFile(ctx context.Context) (string, error) {
 
 	file, err := createFile(filePath)
 	if err != nil {
-		if file != nil {
-			_ = removeFile(filePath)
-		}
 		return "", err
 	}
 
@@ -97,5 +115,56 @@ func (s *ThumbnailService) downloadFileFromUrl(
 	_, err = io.Copy(writer, res.Body)
 	if err != nil {
 		_ = writer.CloseWithError(err)
+	}
+}
+
+func generateThumbnail(
+	ctx context.Context,
+	filePath string,
+	quality int,
+) (string, error) {
+	thumbnailPathChan := make(chan string, 1)
+	errChan := make(chan error, 1)
+
+	doc, err := fitz.New(filePath)
+	if err != nil {
+		return "", handleError(err)
+	}
+
+	fmt.Println("Generating thumbnail")
+	go func() {
+		thumbnailPath := path.Join(
+			path.Dir(filePath),
+			strings.ReplaceAll(path.Base(filePath), path.Ext(filePath), ".jpeg"),
+		)
+		file, err := createFile(thumbnailPath)
+		if err != nil {
+			errChan <- err
+			return
+		}
+		img, err := doc.Image(0)
+		if err != nil {
+			errChan <- handleError(err)
+			return
+		}
+
+		err = jpeg.Encode(file, img, &jpeg.Options{Quality: quality})
+		if err != nil {
+			errChan <- handleError(err)
+			return
+		}
+		thumbnailPathChan <- thumbnailPath
+	}()
+
+	select {
+	case thumbnailPath := <-thumbnailPathChan:
+		fmt.Println("Thumbnail generated")
+		return thumbnailPath, nil
+	case err := <-errChan:
+		fmt.Println("Error generating thumbnail")
+		return "", err
+	case <-ctx.Done():
+		fmt.Println("Context done")
+		return "", handleError(ctx.Err())
 	}
 }

@@ -15,3 +15,6 @@
 ### Starting Project
 
 - `cd src && go run .`
+
+![alt text](image.png)
+![alt text](image-1.png)

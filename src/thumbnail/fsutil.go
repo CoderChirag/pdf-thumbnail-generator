@@ -50,8 +50,12 @@ func createFile(path string) (*os.File, error) {
 	}
 	file, err := os.Create(path)
 	if err != nil {
+		if file != nil {
+			_ = removeFile(path)
+		}
 		return nil, handleError(err)
 	}
+
 	return file, nil
 }
 
