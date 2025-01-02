@@ -1,0 +1,23 @@
+Workers: 5
+Benchtime: 10x
+
+goos: darwin
+goarch: arm64
+pkg: github.com/coderchirag/pdf-thumbnail-generator/usecases/thumbnail
+cpu: Apple M2
+BenchmarkGenerateThumbnailSequentially
+BenchmarkGenerateThumbnailSequentially-2              10        2790734688 ns/op                96.26 PeakCPU(millicores)              120.2 PeakMemory(MB)                2.791 s/op
+BenchmarkGenerateThumbnailConcurrently
+BenchmarkGenerateThumbnailConcurrently-2              10        7877529466 ns/op               186.5 PeakCPU(millicores)               480.8 PeakMemory(MB)                7.878 s/op              0.7878 s/op(avg)
+BenchmarkGenerateThumbnailPipeline
+BenchmarkGenerateThumbnailPipeline-2                  10        12557815679 ns/op              183.1 PeakCPU(millicores)               482.0 PeakMemory(MB)               12.56 s/op               1.256 s/op(avg)
+PASS
+ok      github.com/coderchirag/pdf-thumbnail-generator/usecases/thumbnail       258.892s
+
+goos: darwin
+goarch: arm64
+pkg: github.com/coderchirag/pdf-thumbnail-generator/usecases/thumbnail
+cpu: Apple M2
+BenchmarkGenerateThumbnailSequentially
+BenchmarkGenerateThumbnailSequentially-2              50        2738151436 ns/op               104.0 PeakCPU(millicores)               156.1 PeakMemory(MB)                2.738 s/op
+BenchmarkGenerateThumbnailConcurrently

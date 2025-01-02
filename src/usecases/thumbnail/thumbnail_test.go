@@ -138,3 +138,46 @@ func BenchmarkGenerateThumbnailConcurrently(b *testing.B) {
 		"s/op(avg)",
 	)
 }
+
+func BenchmarkGenerateThumbnailPipeline(b *testing.B) {
+	testPdfUrl := "https://drive.usercontent.google.com/download?id=1Qspoh1gKWl4KS9MPj0LCQE3hKdKZInmb&export=download&authuser=0"
+	ctx := context.Background()
+
+	pipeline := thumbnail_usecase.NewThumbnailPipeline(10)
+
+	monitoring := NewMonitoring()
+	monitoring.StartMonitoring(b)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		g := errgroup.Group{}
+		b.StartTimer()
+		for j := 0; j < 10; j++ {
+			g.Go(func() error {
+				thumbnailPath, err := pipeline.Process(
+					ctx,
+					testPdfUrl,
+				)
+				if err != nil {
+					return err
+				}
+				if _, err := os.Stat(thumbnailPath); os.IsNotExist(err) {
+					return errors.New("thumbnail was not created")
+				}
+				_ = os.Remove(thumbnailPath)
+				return nil
+			})
+		}
+		if err := g.Wait(); err != nil {
+			b.Fatal(err)
+		}
+		b.StopTimer()
+	}
+
+	monitoring.StopMonitoring()
+	monitoring.ReportMetrics(b)
+	b.ReportMetric(
+		(float64(float64(b.Elapsed().Seconds())/float64(b.N)) / float64(10)),
+		"s/op(avg)",
+	)
+}

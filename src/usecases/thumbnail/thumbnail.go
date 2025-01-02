@@ -130,6 +130,7 @@ func (p *ThumbnailPipeline) generateThumbnailWorker(id int) {
 			input.pdfPath,
 			quality,
 		)
+		_ = os.Remove(input.pdfPath)
 		if err != nil {
 			input.result <- &pipelineOutput{
 				err: err,
