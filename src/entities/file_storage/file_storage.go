@@ -6,6 +6,7 @@ package file_storage
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"net/url"
 	"os"
@@ -20,6 +21,7 @@ func DownloadFileToTempDir(
 	baseDir string,
 	ext string,
 ) (string, error) {
+	fmt.Println("Downloading file to temp dir")
 	pipeReader, pipeWriter := io.Pipe()
 	defer func() {
 		if err := pipeReader.Close(); err != nil {

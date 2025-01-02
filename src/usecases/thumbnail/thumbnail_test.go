@@ -82,7 +82,7 @@ func BenchmarkGenerateThumbnailSequentially(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		b.StartTimer()
-		thumbnailPath, err := thumbnail_usecase.GenerateThumbnailSequentially(ctx, testPdfUrl)
+		thumbnailPath, err := thumbnail_usecase.GenerateThumbnail(ctx, testPdfUrl)
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -98,7 +98,7 @@ func BenchmarkGenerateThumbnailSequentially(b *testing.B) {
 	monitoring.ReportMetrics(b)
 }
 
-func BenchmarkGenerateThumbnailSequentiallyWithTraffic(b *testing.B) {
+func BenchmarkGenerateThumbnailConcurrently(b *testing.B) {
 	testPdfUrl := "https://drive.usercontent.google.com/download?id=1Qspoh1gKWl4KS9MPj0LCQE3hKdKZInmb&export=download&authuser=0"
 	ctx := context.Background()
 
@@ -111,7 +111,7 @@ func BenchmarkGenerateThumbnailSequentiallyWithTraffic(b *testing.B) {
 		b.StartTimer()
 		for j := 0; j < 10; j++ {
 			g.Go(func() error {
-				thumbnailPath, err := thumbnail_usecase.GenerateThumbnailSequentially(
+				thumbnailPath, err := thumbnail_usecase.GenerateThumbnail(
 					ctx,
 					testPdfUrl,
 				)

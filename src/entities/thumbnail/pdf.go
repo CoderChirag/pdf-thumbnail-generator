@@ -13,6 +13,7 @@ func generateThumbnailImageFromPdf(filePath string) (*image.RGBA, error) {
 	if err != nil {
 		return nil, thumbnail_errors.ConstructErrorWithCode(err, thumbnail_errors.PDFParseError)
 	}
+	defer doc.Close()
 
 	img, err := doc.Image(0)
 	if err != nil {

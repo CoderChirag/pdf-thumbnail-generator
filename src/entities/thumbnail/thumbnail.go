@@ -5,6 +5,7 @@ package thumbnail
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"path"
 	"strings"
@@ -14,6 +15,7 @@ import (
 )
 
 func GenerateThumbnailFromPdf(ctx context.Context, pdfPath string, quality int) (string, error) {
+	fmt.Println("Generating thumbnail from pdf")
 	doneChan := make(chan bool, 1)
 	errChan := make(chan error, 1)
 

@@ -6,18 +6,22 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"time"
+
+	"github.com/google/uuid"
 
 	"github.com/coderchirag/pdf-thumbnail-generator/types"
 	thumbnail_usecase "github.com/coderchirag/pdf-thumbnail-generator/usecases/thumbnail"
 )
 
 func generateThumbnail(w http.ResponseWriter, r *http.Request) {
+	requestId := uuid.New()
+	fmt.Println("Received request:", requestId)
+	t := time.Now()
 	ctx := r.Context()
 	pdfUrl := r.FormValue("pdfUrl")
-	thumbnailPath, err := thumbnail_usecase.GenerateThumbnailSequentially(
-		ctx,
-		pdfUrl,
-	)
+	pipeline := thumbnail_usecase.GetThumbnailPipeline()
+	thumbnailPath, err := pipeline.Process(ctx, pdfUrl)
 	if err != nil {
 		handleError(err, w)
 		return
@@ -36,6 +40,7 @@ func generateThumbnail(w http.ResponseWriter, r *http.Request) {
 		handleError(err, w)
 		return
 	}
+	fmt.Printf("Served Response: %s, time taken: %s\n", requestId, time.Since(t))
 }
 
 func handleError(err error, w http.ResponseWriter) {
